@@ -1,0 +1,597 @@
+--------------------------------------------------------------------------
+스프링 MyBatis 설정하기 및 로그출력 - 샤쿠 블로그
+- http://syaku.tistory.com/267
+--------------------------------------------------------------------------
+
+개발 환경Mac OS X 10.9.4
+JAVA 1.6
+Apache Tomcat 7.x
+MySQL 5.x
+Spring 3.1.1
+Spring Tool Suite 3.5.1
+Maven 2.5.1
+myBatis 3.2.7
+jQuery 1.11.0
+2014.07.19 Written by 최석균 (Syaku)
+소스파일 :  source-3.zip
+3. myBatis 와 Spring 연동하기게시판 프로젝트에 사용되는 RDBMS 는 MySQL 5.x 이상을 사용하고 언어셋은 utf-8 이다.
+myBatis 는 두가지 버전이 있다. myBatis 2.x 버전은 원래 iBatis 라 불렸고, 현재까지 배포되고 있는 myBatis 3.x 버전이 myBatis 이다. 두버전은 사용법이 전혀 다르므로 혼동이 없어야 한다. 그리고 iBatis 즉 2.x 버전은 패치작업이 중단되었고, 3.x 버전만 패치를 지원해고 있다.
+myBatis 와 MySQL 을 사용하기 위해 아래의 라이브러리를 설치해야한다.
+
+	* spring-jdbc : Spring 에서 지원하는 JDBC
+	* mysql-connector-java : MySQL 커넥션 드라이브를 제공
+	* mybatis : myBatis
+	* mybatis-spring : Spring 에서 연동을 지원하는 myBatis
+	* commons-dbcp : 커넥션풀을 담당하는 Apache Commons DBCP
+	* commons-lang : myBatis 연동과 관련은 없지만, 빈번하게 사용되는 문자열 라이브러리를 Aapche Commons Lang 로 통일함.
+
+스프링에 라이브러리를 설치하려면 pom.xml 에 dependency 를 추가하면 된다.
+위 라이브러리들을 Maven Repository에서 검색 후 적당한 버전의 dependency 를 복사해서 아래와 같이 등록한다.
+spring-* 스프링 라이브러리는 spring 버전과 동일한 라이브러리를 설치해야 한다. 그래서 version 노드에 ${org.springframework-version} 삽입하면 된다.
+@소스 pom.xml
+<!-- spring-jdbc --><dependency>
+   <groupId>org.springframework</groupId>
+   <artifactId>spring-jdbc</artifactId>
+   <version>${org.springframework-version}</version></dependency>
+
+<!-- mysql-connector-java --><dependency>
+   <groupId>mysql</groupId>
+   <artifactId>mysql-connector-java</artifactId>
+   <version>5.1.31</version></dependency>
+
+<!-- mybatis --><dependency>
+   <groupId>org.mybatis</groupId>
+   <artifactId>mybatis</artifactId>
+   <version>3.2.7</version></dependency><dependency>
+   <groupId>org.mybatis</groupId>
+   <artifactId>mybatis-spring</artifactId>
+   <version>1.2.2</version></dependency>
+
+<!-- commons-dbcp --><dependency>
+   <groupId>commons-dbcp</groupId>
+   <artifactId>commons-dbcp</artifactId>
+   <version>1.4</version></dependency>
+
+<!-- commons-lang --><dependency>
+   <groupId>commons-lang</groupId>
+   <artifactId>commons-lang</artifactId>
+   <version>2.6</version></dependency>
+자동으로 Maven 이 빌드 된다. 만약 안될 경우 수동으로 빌드한다.
+빌드가 완료되면 설치된 라이브러리는 Maven Dependencies 폴더에서 확인할 수 있다.
+DB Connection 과 myBatis 설정파일 만들기설정 파일들은 resource 폴더에 생성한다.
+MySQL 접속 정보 설정 프로퍼티를 src/main/resource 경로 아래 생성한다.
+@소스 jdbc.properties
+jdbc.driver = com.mysql.jdbc.Driver
+jdbc.url = jdbc:mysql://localhost:3306/spring?useUnicode=yes&amp;characterEncoding=UTF8&amp;autoReconnect=true&amp;autoReconnectForPools=true
+jdbc.username = spring
+jdbc.password = spring
+
+RDBMS 드라이브, 접속경로, 계정, 암호 순으로 항목을 입력한다.
+다음은 스프링에서 MySQL 에 접속하는 설정 파일을 생성한다.
+resource 폴더에는 다양한 정보를 저장히기 때문에 폴더를 구분하여 관리하고 resource 폴더 아래 config/spring/context 폴더(패킷)를 생성하고 아래의 파일도 생성한다.
+@소스 context-datasource.xml
+<?xml version="1.0" encoding="UTF-8"?><beans xmlns="http://www.springframework.org/schema/beans"xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+<bean id="jdbcProp" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+<property name="location" value="classpath:jdbc.properties" /></bean>
+
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"><property name="driverClassName" value="${jdbc.driver}" /><property name="url" value="${jdbc.url}" /><property name="username" value="${jdbc.username}" /><property name="password" value="${jdbc.password}" /></bean>
+
+</beans>
+jdbcProp 는 jdbc.properties 파일을 읽어온다.
+dataSource 는 Apache Commons DBCP 를 이용하여 MySQL과 연결을 진행한다.
+jdbcProp 에서 읽어온 프로퍼티 변수들은 ${jdbc.driver} 형식으로 사용할 수 있다.
+디비 접속 담당은 스프링에서 Apache Commons DBCP 가 하며, myBatis 는 맵퍼를 통한 쿼리를 실행하고 값들을 주고 받는 역활을 담당한다.
+@소스 mybatis-config-base.xml
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE configuration
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+    <settings>  
+        <setting name="cacheEnabled"              value="true"/>  
+        <setting name="lazyLoadingEnabled"        value="false"/>  
+        <setting name="multipleResultSetsEnabled" value="true"/>  
+        <setting name="useColumnLabel"            value="true"/>  
+        <setting name="useGeneratedKeys"          value="false"/>  
+        <setting name="defaultExecutorType"      value="SIMPLE"/>  
+        <setting name="defaultStatementTimeout"  value="25000"/>  
+    </settings>
+
+    <typeHandlers>
+        <!--  java.sql.Timestamp 를 java.util.Date 형으로 반환 -->
+        <typeHandler javaType="java.sql.Timestamp" handler="org.apache.ibatis.type.DateTypeHandler"/>
+        <typeHandler javaType="java.sql.Time"      handler="org.apache.ibatis.type.DateTypeHandler"/>
+        <typeHandler javaType="java.sql.Date"      handler="org.apache.ibatis.type.DateTypeHandler"/>
+    </typeHandlers>
+
+</configuration>
+위 소스는 myBatis 설정 정보의 파일이다. 필요한 옵션을 추가하면 된다.
+옵션에 대한 상세한 설명은 mybatis.org 튜토리얼에서 참조할 수 있다.
+다음은 스프링과 myBatis 연동하는 설정 파일이다.
+@소스 context-mybatis.xml
+<?xml version="1.0" encoding="UTF-8"?><beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:config/spring/context/mybatis-config-base.xml" />
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:com/syaku/**/dao/*Mapper.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- scan for mappers and let them be autowired -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.syaku.bbs" />
+        <property name="annotationClass" value="org.springframework.stereotype.Repository"/>
+    </bean></beans>
+이젠 설정파일을 하위 컨텍스트에서 사용할 수 있게 root-context.xml 에 impoert 시킨다.
+root-context.xml 파일의 위치는 src/main/webapp/WEB-INF/spring 이다.
+@소스 root-context.xml
+<?xml version="1.0" encoding="UTF-8"?><beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- Root Context: defines shared resources visible to all other web components -->
+    <import resource="classpath:config/spring/context/context-datasource.xml"/>
+    <import resource="classpath:config/spring/context/context-mybatis.xml" /></beans>
+
+
+스프링 프레임워크는 아주 간결하게 myBatis 와 연동을 지원한다.
+원래 myBatis 사용하기 위해 맵퍼들을 직접 호출해야 하지만 스프링에서는 스캔을 통해 자동적으로 맵퍼를 호출할 수 있다.
+프로퍼티 mapperLocations 노드에서 스캔하려는 맵퍼의 경로 범위를 설정하면 경로와 일치하는 맵퍼를 모두 호출하게 된다. 그리고 맵퍼의 인터페이스를 자동으로 스캔하는 기능도 제공하고 있다.
+맵퍼의 인터페이스를 생성하여 사용하는 것은 필수 조건은 아니다. 다만 myBatis 에서 사용하는 것을 권장한다.
+주어진 SQL 구문의 파라미터와 리턴값을 설명하는 인터페이스(예를 들면, BlogMapper.class )를 사용하여, 문자열 처리 오류나 타입 캐스팅 오류 없이 좀더 타입에 안전하고 깔끔하게 실행할 수 있기때문이라고 한다.
+좀 더 자세한 사항은 myBatis 메뉴얼에서 SqlSessionFactory 에서 SqlSession 만들기 섹션을 참조하면 된다.
+여기까지 스프링과 myBatis 연동을 위한 설정 작업은 모두 마쳤다. 다음은 데이터를 조회하고 출력하는 작업을 하기로 한다.
+게시판 테이블 생성하고, 테이블 항목(필드)에 맞는 VO 를 생성한다.
+VO(Value Object) 는 DB 데이터를 조회 후 결과를 담는 객체를 말한다.
+@소스 게시판 테이블 생성 쿼리
+CREATE TABLE `bbs` (
+  `idx` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_name` varchar(50) DEFAULT NULL,
+  `subject` varchar(250) DEFAULT NULL,
+  `content` longtext,
+  `reg_datetime` char(14) DEFAULT NULL,
+  PRIMARY KEY (`idx`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8
+
+VO를 생성하기 위해 src/main/java 에 아래의 패킷을 생성한다.
+com.syaku.bbs.dao
+@소스 BbsVo.java
+package com.syaku.bbs.dao;
+public class BbsVo {
+    private Integer idx;
+    private String user_name;
+    private String subject;
+    private String content;
+    private String reg_datetime;
+
+    public Integer getIdx() {
+        return idx;
+    }
+    public void setIdx(Integer idx) {
+        this.idx = idx;
+    }
+    public String getUser_name() {
+        return user_name;
+    }
+    public void setUser_name(String user_name) {
+        this.user_name = user_name;
+    }
+    public String getSubject() {
+        return subject;
+    }
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+    public String getContent() {
+        return content;
+    }
+    public void setContent(String content) {
+        this.content = content;
+    }
+    public String getReg_datetime() {
+        return reg_datetime;
+    }
+    public void setReg_datetime(String reg_datetime) {
+        this.reg_datetime = reg_datetime;
+    }
+}
+
+다음은 myBatis 에서 CRUD 를 작업 할 맵퍼를 생성한다.
+CRUD 란 Create Read Update Delete 의 작업을 말한다.
+@소스 BbsMapper.xml
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.syaku.bbs.dao.BbsMapper">
+
+    <resultMap id="bbsMap" type="com.syaku.bbs.dao.BbsVo">
+        <id     property="idx"    column="idx" />
+        <result property="user_name" column="user_name" />
+        <result property="subject"       column="subject" />
+        <result property="content"       column="content" />
+        <result property="reg_datetime"       column="reg_datetime" />
+    </resultMap>
+
+    <select id="select" resultMap="bbsMap">
+        SELECT  * FROM bbs
+    </select>
+
+    <select id="selectOne" resultMap="bbsMap">
+        SELECT  * FROM bbs WHERE idx = #{idx}
+    </select>
+
+    <insert id="insert">
+         INSERT INTO bbs ( user_name, subject, content, reg_datetime ) VALUES (
+                #{user_name}
+              , #{subject}
+              , #{content}
+              , #{reg_datetime}
+         )
+    </insert>
+
+    <update id="update">
+         UPDATE bbs SET
+              user_name = #{user_name},
+              subject = #{subject},
+              content = #{content},
+              reg_datetime = #{reg_datetime}
+         WHERE idx = #{idx} LIMIT 1
+    </update>
+
+    <delete id="delete">
+         DELETE FROM bbs WHERE idx = #{idx}
+    </delete>
+
+</mapper>
+맵핑 인터페이스를 사용하기 때문에 parameterType 사용하지 않아도 된다.
+다음은 myBatis 맵퍼 인터페이스를 생성한다.
+@소스 BbsMapper.java
+package com.syaku.bbs.dao;
+
+import java.util.List;
+import org.springframework.stereotype.Repository;
+
+@Repository(value = "bbsMapper")
+public interface BbsMapper {
+    List<BbsVo> select();
+
+    BbsVo selectOne(int idx);
+    void insert(BbsVo bbsVo);
+    void update(BbsVo bbsVo);
+    void delete(int idx);
+}
+
+context-mybatis.xml 에 Repository 어노테이션을 자동으로 스캔하도록 작업을 하였고, 맵퍼 인터페이스에 @Repository 어노테이션을 정의하였다.
+다음은 VO 와 Mapper 를 연결해주는 DAO를 생성한다.
+@소스 BbsDao.java
+package com.syaku.bbs.dao;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import org.springframework.stereotype.Service;
+
+@Service(value = "bbsDao")
+public class BbsDao {
+    @Resource(name = "bbsMapper")
+    private BbsMapper bbsMapper;
+
+    public List<BbsVo> getSelect() {
+        return this.bbsMapper.select();
+    }
+
+    public BbsVo getSelectOne(int idx) {
+        return this.bbsMapper.selectOne(idx);
+    }
+
+    public void insert(BbsVo bbsVo) {
+         this.bbsMapper.insert(bbsVo);
+    }
+
+    public void update(BbsVo bbsVo) {
+         this.bbsMapper.update(bbsVo);
+    }
+
+    public void delete(int idx) {
+         this.bbsMapper.delete(idx);
+    }
+}
+
+Service 어노테이션을 지정하였다.
+현재 myBatis 는 규격화된 프로그래밍이 가능하도록 제약사항이 많아졌다. 그래서 iBatis 보다 복잡해진 것이다. 불편하다면 iBatis 를 사용해도 무방하다. 단 더이상 iBatis 버전업은 지원하지 않는 다.
+
+
+게시판 DB 데이터 적용하기현재 만들어 놓은 정적인 게시판을 DB와 연동하여 동적인 게시판으로 업데이트하는 작업을 진행한다.
+ViewController 에 myBatis CRUD 작업을 할 수 있게 소스를 업데이트한다.
+@소스 ViewController.java
+package com.syaku.bbs;
+
+import java.util.List;
+import javax.annotation.Resource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.syaku.bbs.dao.*;
+
+@Controller(value = "viewController")
+public class ViewController {
+    private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
+
+    // Resource 어노테이션을 이용하여 BbsDao 선언.
+    @Resource(name = "bbsDao")
+    private BbsDao bbsDao;
+
+    // 게시판 목록
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public String dispBbsList(Model model) {
+        logger.info("display view BBS list");
+        List<BbsVo> list = this.bbsDao.getSelect();
+        model.addAttribute("list", list);
+
+        logger.info("totcal count" + list.size() );
+
+        return "bbs.list";
+    }
+
+    // 게시판 상세보
+    // PathVariable 어노테이션을 이용하여 RESTful 방식 적용
+    // bbs/1 -> id = 1; id = 게시물 번호로 인식함.
+    // 일반 적으로 (@ReuqstParam(value = "bbsVo", required = false, defaultValue = "0"), int idx, Model model)
+    @RequestMapping("/{idx}")
+    public String dispBbsView(@PathVariable int idx, Model model) {
+        logger.info("display view BBS view idx = {}", idx);
+        BbsVo object = this.bbsDao.getSelectOne(idx);
+
+        model.addAttribute("object", object);
+        return "bbs.view";
+    }
+
+    // 게시판 쓰기
+    @RequestMapping(value = "/write", method = RequestMethod.GET)
+    public String dispBbsWrite(@RequestParam(value="idx", defaultValue="0") int idx, Model model) {
+        logger.info("display view BBS write");
+
+        if (idx > 0) {
+            BbsVo object = this.bbsDao.getSelectOne(idx);
+            model.addAttribute("object", object);
+        }
+
+        return "bbs.write";
+    }
+
+    @RequestMapping(value = "/write_ok", method = RequestMethod.POST)
+    public String procBbsWrite(@ModelAttribute("bbsVo") BbsVo bbsVo, RedirectAttributes redirectAttributes) {
+        Integer idx = bbsVo.getIdx();
+
+        if (idx == null || idx == 0) {
+            this.bbsDao.insert(bbsVo);
+            redirectAttributes.addFlashAttribute("message", "추가되었습니다.");
+            return "redirect:/";
+        } else {
+            this.bbsDao.update(bbsVo);
+            redirectAttributes.addFlashAttribute("message", "수정되었습니다.");
+            return "redirect:/write?idx=" + idx;
+        }
+    }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
+    public String procBbsDelete(@RequestParam(value = "idx", required = false) int idx) {
+        this.bbsDao.delete(idx);
+        return "redirect:/";
+    }
+
+}
+
+데이터를 저장하고 갱신하는 비지니스 로직 2개가 추가되었다.
+procBbsWrite 는 글을 추가하고 수정하는 역활을 하고, procBbsDelete 는 글을 삭제하는 역활을 한다.
+글 번호를 Integer 타입으로 사용한 이유는 글을 추가할 경우 기본적으로 글 번호가 없기 때문에 NULL 을 받기 위해서이다. null 이거나 0 인 경우 글 추가 작업을 하고 아닌 경우 수정을 하게된다.
+각 상수에 사용한 어노테이션은 다음과 같다.
+@RequestParameter 는 요청된 파라메터의 값을 찾아 변수에 담아주는 역활을 한다. defaultValue 는 값이 empty 인 경우 치환하는 작업을 한다.
+defaultValue 를 지정하지 않을 경우 파라메터 값은 필수조건이기 때문에 익셉션이 발생한다.
+@ModelAttribute 는 파라메터 값을 Vo 에 자동으록 맵핑하는 작업을 한다.
+RedirectAttributes 는 작업을 처리 후 리다이렉트 된 화면에 변수 값을 넘겨주는 역활을 한다.
+뷰페이지에 데이터를 출력하는 작업을 한다.
+@소스 bbs.list.jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%><%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %><!DOCTYPE html><html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <title>스프링프레임워크 게시판</title>
+  </head>
+  <body>
+  <h1>${message}</h1>
+  <table border="1">
+    <colgroup>
+  <col width="60"><col><col width="115"><col width="85">
+  </colgroup>
+  <thead>
+    <tr>
+      <th scope="col">번호</th>
+      <th scope="col">제목</th>
+      <th scope="col">작성자</th>
+      <th scope="col">등록일</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <!-- 목록이 반복될 영역 -->
+    <c:forEach var="item" items="${list}" varStatus="status">
+    <tr>
+      <td>${item.idx}</td>
+      <td><a href="./${item.idx}">${item.subject}</a></td>
+      <td>${item.user_name}</td>
+      <td>${item.reg_datetime}</td>
+    </tr>
+    </c:forEach>
+
+    </tbody>
+
+  </table>
+  <div><a href="./write">쓰기</a></div>
+  </body></html>
+@소스 bbs.view.jsp
+<%@ page contentType="text/html; charset=utf-8" %><%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %><!DOCTYPE html><html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <title>스프링프레임워크 게시판</title>
+  </head>
+  <body>
+
+    <script>
+    function del(){
+      if (confirm("삭제하시겠습니까?")) document.form.submit();
+    }
+    </script>
+
+    <form id="form" name="form" method="post" action="./delete">
+      <input type="hidden" id="idx" name="idx" value="${object.idx}" />
+    </form>
+    <p>${object.subject}</p>
+
+    <div>
+    ${object.content}
+    </div>
+
+    <div>
+    <p>작성자 : ${object.user_name}</p>
+    <p>등록일 : ${object.reg_datetime}</p>
+    </div>
+
+    <div>
+      <button type="button" onclick="del()">삭제</button>
+      <a href="./write?idx=${object.idx}">수정</a>
+      <a href="./">목록</a>
+    </div>
+  </body></html>
+@소스 bbs.write.jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%><%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %><!DOCTYPE html><html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <title>스프링프레임워크 게시판</title>
+  </head>
+  <body>
+  <h1>${message}</h1>
+  <form id="form" method="post" action="./write_ok">
+  <input type="hidden" name="idx" id="idx" value="${object.idx}" />
+  <div>
+  <span>제목</span>
+  <input type="text" id="subject" name="subject" value="${object.subject}" />
+  </div>
+  <div>
+  <span>작성자</span>
+  <input type="text" id="user_name" name="user_name" value="${object.user_name}" />
+  </div>
+  <div>
+  <span>내용</span>
+  <textarea id="content" name="content" rows="10" cols="20">${object.content}</textarea>
+  </div>
+
+  <div>
+  <input type="submit" value="save" />
+  <a href="./">목록</a>
+  </div>
+  </form>
+  </body></html>
+게시판에 글을 등록해서 데이터를 확인한다.
+
+한글이 깨져서 저장되었다. 이럴경우 아래의 소스를 web.xml에 추가한다.
+@소스 web.xml
+<!-- utf-8 filter --><filter>
+    <filter-name>encodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+        <param-name>encoding</param-name>
+        <param-value>UTF-8</param-value>
+    </init-param></filter>
+
+<filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <url-pattern>/*</url-pattern></filter-mapping>
+다시 게시판을 등록해보고 한글이 깨지는 지 확인한다.
+
+
+
+MyBatis 로그 출력하기로그 출력을 위해 Maven 에 log4jdbc 라이브러리를 추가한다.
+@소스 pom.xml
+<!-- jdbc log --><dependency>
+    <groupId>org.lazyluke</groupId>
+    <artifactId>log4jdbc-remix</artifactId>
+    <version>0.2.7</version></dependency>
+그리고 로그 출력을 위한 설정 정보를 추가한다.
+@소스 context-datasource.xml
+<bean id="dataSource" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+ <constructor-arg ref="dataSourceSpied" />
+ <property name="logFormatter">
+  <bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+   <property name="loggingType" value="MULTI_LINE" />
+   <property name="sqlPrefix" value="SQL:::" />
+  </bean>
+ </property></bean>
+기존에 dataSource 를 dataSourceSpied 로 변경하고 위 소스를 추가하면 된다.
+마지막으로 로그 출력방식을 설정하기 위해 정보를 추가한다.
+/src/main/resources/log4j.xml 파일을 열어 아래와 같이 수정한다.
+@소스 log4j.xml
+<!-- 
+# log4jdbc settings development production
+jdbc.connection     :     WARN       WARN
+jdbc.audit          :     WARN       WARN
+jdbc.sqlonly        :     WARN       WARN
+jdbc.sqltiming      :     INFO       WARN
+jdbc.resultset      :     WARN       WARN
+jdbc.resultsettable :     INFO       WARN
+-->
+
+<logger name="jdbc.connection" additivity="false">
+    <level value="WARN"/>
+    <appender-ref ref="console"/></logger>
+
+<logger name="jdbc.audit" additivity="false">
+    <level value="WARN"/>
+    <appender-ref ref="console"/></logger>
+
+<logger name="jdbc.sqlonly" additivity="false">
+    <level value="WARN"/>
+    <appender-ref ref="console"/></logger>
+
+<logger name="jdbc.sqltiming" additivity="false">
+    <level value="INFO"/>
+    <appender-ref ref="console"/></logger>
+
+<logger name="jdbc.resultset" additivity="false">
+    <level value="WARN"/>
+    <appender-ref ref="console"/></logger>
+
+<logger name="jdbc.resultsettable" additivity="false">
+    <level value="INFO"/>
+    <appender-ref ref="console"/></logger>
+STS 콘솔 정보를 확인하면 아래와 같은 로그가 출력된다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

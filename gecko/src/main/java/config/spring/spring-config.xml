@@ -1,0 +1,135 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/jee 
+        http://www.springframework.org/schema/jee/spring-jee-3.1.xsd
+        http://www.springframework.org/schema/jdbc 
+        http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/security
+        http://www.springframework.org/schema/security/spring-security.xsd">
+	<context:component-scan base-package="nz.pe.gecko.template.mvc" />
+	<context:component-scan base-package="nz.pe.gecko.template.test" />
+	<context:component-scan base-package="nz.pe.gecko.template.mybatis" />
+	<context:component-scan base-package="nz.pe.gecko.template.hr" />
+
+	<!-- <mvc:resources mapping="/app/**" location="/app/build/"/> -->
+
+
+	<mvc:annotation-driven />
+
+	<bean id="jspViewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+	<!-- <security:global-method-security pre-post-annotations="enabled"> <security:protect-pointcut 
+		expression="execution(* tutorial.rest.mvc.*.*(..))" access="ROLE_DUMMY"/> 
+		</security:global-method-security> -->
+
+
+
+	<!-- DBCP & MariaDB -->
+	<bean id="myDatasourceSpied" class="org.apache.commons.dbcp2.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}"></property>
+		<property name="url" value="${jdbc.url}"></property>
+		<property name="username" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="maxTotal" value="${dbcp.maxTotal}"></property>
+		<property name="minIdle" value="${dbcp.minIdle}"></property>
+		<property name="maxIdle" value="${dbcp.maxIdle}"></property>
+		<property name="maxWaitMillis" value="${dbcp.maxWaitMillis}"></property>
+		<property name="testOnBorrow" value="${dbcp.testOnBorrow}"></property>
+		<property name="validationQuery" value="${dbcp.validationQuery}"></property>
+		<property name="timeBetweenEvictionRunsMillis" value="${dbcp.timeBetweenEvictionRunsMillis}"></property>
+	</bean>
+	<bean id="configProperties"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+		lazy-init="false">
+		<property name="locations">
+			<list>
+				<value>classpath:config/jdbc/jdbc.properties</value>
+			</list>
+		</property>
+	</bean>
+	<!-- MyBatis logging -->
+	<bean id="myDatasource" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="myDatasourceSpied" />
+		<property name="logFormatter">
+			<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+				<property name="loggingType" value="MULTI_LINE" />
+				<property name="sqlPrefix" value="SQL:::" />
+			</bean>
+		</property>
+	</bean>
+	<!-- DBCP & MariaDB -->
+
+
+
+
+ 
+
+	<!-- Transaction -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="myDatasource" />
+	</bean>
+	
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<!-- Transaction -->
+
+	<!-- Datasource configuration : Basic Connection Type -->
+	<!-- <bean id="myDatasource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource"> 
+		<property name="driverClass" value="org.mariadb.jdbc.Driver" /> <property 
+		name="url" value="jdbc:mariadb://127.0.0.1:3306/mvc03" /> <property name="username" 
+		value="root" /> <property name="password" value="mysql" /> </bean> -->
+
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="myDatasource" />
+		<!-- <property name="typeAliasesPackage" value="nz.co.s3m.member.vo" /> -->
+		<!-- makes sub-classes of typeAliasesPackage could be used in mapper xml 
+			as prameterType or resultType -->
+		<property name="mapperLocations" value="classpath:config/jdbc/mybatis/mappers/*.xml" />
+		<property name="configLocation"
+			value="classpath:config/jdbc/mybatis/mybatis-config.xml" />
+	</bean>
+
+
+
+
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+
+	<!-- JSON (deprecated) -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"> 
+		<property name="messageConverters"> <list> <bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter"></bean> 
+		</list> </property> </bean> -->
+	<!-- JSON (deprecated) -->
+
+	<!-- File upload (bean id should not be changed !!!) -->
+	<bean name="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- <property name="maxUploadSize" value="10240000" /> -->
+		<property name="maxInMemorySize" value="1024000" />
+		<!-- files with size below this value are stored in memory, otherwise they 
+			will be stored in disk directly. Default is 10KB (10240 bytes). -->
+	</bean>
+	<!-- File upload -->
+
+
+</beans>

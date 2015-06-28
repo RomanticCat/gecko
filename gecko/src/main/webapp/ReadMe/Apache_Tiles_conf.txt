@@ -1,0 +1,117 @@
+### Apache Tiles Configuration ###
+
+1. pom.xml
+	<dependency>
+		<groupId>org.apache.tiles</groupId>
+		<artifactId>tiles-extras</artifactId>
+		<version>2.2.2</version>
+	</dependency>
+
+
+2. servletContext.xml
+	<!-- 
+		1. View resolver : all references to jsp in the @Controllers will 
+			be mapped to JSPs in /WEB-INF/views folder 
+		2. 'property > order' makes Spring could resolve both SpringMVC pattern & tiles pattern 
+		   > check 'InternalResourceViewResolver' && 'UrlBasedViewResolver' 
+	-->
+	<beans:bean
+	class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+		<beans:property name="order" value="2" />
+	</beans:bean>
+
+	<!-- Tiles configuration -->
+	<beans:bean id="tilesViewResolver"
+		class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<beans:property name="viewClass"
+			value="org.springframework.web.servlet.view.tiles2.TilesView" />
+		<beans:property name="order" value="1" />
+	</beans:bean>
+	<beans:bean id="tilesConfigurer"
+		class="org.springframework.web.servlet.view.tiles2.TilesConfigurer">
+		<beans:property name="definitions">
+			<beans:list>
+				<beans:value>classpath:config/tiles/tiles-definitions.xml</beans:value>
+			</beans:list>
+		</beans:property>
+	</beans:bean>
+	<!-- Tiles configuration -->
+
+3. tiles-definitions.xml
+	<?xml version="1.0" encoding="UTF-8"?>
+	<!DOCTYPE tiles-definitions PUBLIC
+		   "-//Apache Software Foundation//DTD Tiles Configuration 2.1//EN"
+		   "http://tiles.apache.org/dtds/tiles-config_2_1.dtd">
+	<tiles-definitions>
+	  <definition name="tiles.*" template="/WEB-INF/views/tiles/layouts/classic.jsp">
+		<put-attribute name="title" value="Tiles tutorial homepage" />
+		<put-attribute name="header" value="/WEB-INF/views/tiles/inc/tiles_header.jsp" />
+		<put-attribute name="menu" value="/WEB-INF/views/tiles/inc/tiles_menu.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/tiles/inc/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/tiles/inc/tiles_footer.jsp" />
+	  </definition>
+	</tiles-definitions>
+
+
+
+
+4. TilesController.java
+	package nz.co.s3m.controllers;
+
+	import java.text.DateFormat;
+	import java.util.Date;
+	import java.util.Locale;
+
+	import org.apache.commons.dbcp.BasicDataSource;
+	import org.slf4j.Logger;
+	import org.slf4j.LoggerFactory;
+	import org.springframework.beans.factory.annotation.Autowired;
+	import org.springframework.stereotype.Controller;
+	import org.springframework.ui.Model;
+	import org.springframework.web.bind.annotation.RequestMapping;
+	import org.springframework.web.bind.annotation.RequestMethod;
+
+	@Controller
+	public class TilesController {
+
+		private static final Logger logger = LoggerFactory
+				.getLogger(TilesController.class);
+
+		@RequestMapping(value = "tilesListView.do", method = RequestMethod.GET)
+		public String tilesListView(Locale locale, Model model) {
+			logger.debug("TilesController :tilesListView");
+			
+			model.addAttribute("viewName", "### List View ###");
+			
+			// defined in 'tiles-definitions.xml' as 'definition > name' tag
+			return "tiles.listView";
+		}
+
+		@RequestMapping(value = "tilesDetailView.do", method = RequestMethod.GET)
+		public String tilesDetailView(Locale locale, Model model) {
+			logger.debug("TilesController :tilesDetailView");
+			
+			model.addAttribute("viewName", "### Detail View ###");
+			
+			// defined in 'tiles-definitions.xml' as 'definition > name' tag
+			return "tiles.detailView";
+		}
+
+	}
+
+
+
+
+5. create jsp files which are defined in 'tiles-definitions.xml'
+
+
+6. invoke tiles 
+   ex. http://localhost:8080/s3m/tilesListView.do, http://localhost:8080/s3m/tilesDetailView.do
+
+
+
+
+
+

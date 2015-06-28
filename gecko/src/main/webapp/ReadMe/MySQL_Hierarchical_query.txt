@@ -1,0 +1,58 @@
+
+
+--------------------------------------------------------------------------
+Connectby를 쓰지 않고 컬럼3개를 추가하는 경우의 SQL 정리
+  -> 컬럼 3개로 하는 인터넷글이 많으나, 사실상의 거의 않됨
+  -> 컬럼 3으로는 조회는 가능하나, 부모글을 구별하는 컬럼이 없어서 입력을 자동화하기가 거의 불가능함...
+  -> 아래의 설명에 ref_parent라는 컬럼을 추가하고... 글입력시 parent의 값을 확인하여... step값을 입력하도록 로직을 짜야함
+      =>  형제글이 있는 경우, 형제글의 step의 최대치+1 / 형제레벨의 글이 없는 경우, 부모의 step값+1로 새글의 step을 입력하면됨
+  -> 글 삭제시에도 select count(bbs_no) from Hbbs where ref_no = ${현재글의 ref_no} and ref_parents = ${현재글의 bbsno} 로 
+     자식글이 존재하는지를 확인하여 삭제 여부를 결정할 수 있음
+--------------------------------------------------------------------------
+create table Hbbs (
+bbs_no int(10) unsigned NOT NULL AUTO_INCREMENT,
+ref_no int(10) unsigned default '0',
+ref_level int(10) unsigned default '0',            // 답변의 깊이 (계층 깊이)
+ref_step int(10) unsigned default '0',             // 관련된 글내에서 목록을 읽어오는 순서
+title varchar(10),
+primary key(bbs_no)
+) ;
+
+
+// 1. 1st level insert (no parents article)select ifnull(max(bbs_no), 0)+1 as max_bbs_no from Hbbs;
+// --
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (1, 0, 0, 'T1') ;
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (2, 0, 0, 'T2') ;
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (3, 0, 0, 'T3') ;
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (4, 0, 0, 'T4') ;
+
+
+// 2. 1st child article  (3-1)
+// insert 시에 기존의 글에서 bbs_no를 조회해서 부모글을 지정
+//    && 부모글의 ref_level / ref_step 값을 1씩 증가해줌
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (3, 1, 1, 'T3-1') ;
+
+
+// 3. 2nd child article  (3-1-1)
+// insert 시에 기존의 글에서 bbs_no를 조회해서 부모글을 지정
+//        (두번째 레벨도 동일하게 첫번째 부모글을 지정)
+//    && 부모글의 ref_level / ref_step 값을 1씩 증가해줌
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (3, 2, 2, 'T3-1-1') ;
+
+
+// 4. 1st child & 2nd article (3-2)
+// insert는 동일하나 하위에 존재하는 글들의 ref_step을 1씩 증가해주어야함
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (3, 1, 2, 'T3-2') ;
+// step 에서 기존에 있던 번호를 1씩 update 해줌
+update Hbbs set ref_step = ref_step+1 where bbs_no=3 and ref_step > 2
+
+// 5. additonal 1st level article// 부모글에 해당하는 글 입력시는 테이블의 max(bbs_no) 를 이용하여 ref_no를 지정
+//     && ref_level / ref_step 은 0
+select ifnull(max(bbs_no), 0)+1 as max_bbs_no from Hbbs;
+insert into Hbbs (ref_no, ref_level, ref_step, title) values (8, 0, 0, 'T5') ;
+
+----------------------------------------------------------------------------------
+select * from Hbbs order by ref_no desc, ref_step asc ;
+----------------------------------------------------------------------------------
+
+

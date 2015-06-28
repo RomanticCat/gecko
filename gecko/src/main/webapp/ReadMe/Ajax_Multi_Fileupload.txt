@@ -1,0 +1,135 @@
+--------------------------------------------------------------------------
+SpringMVC & jQuery & ajax & Multi file  업로드 최종 샘플 - by melting
+--------------------------------------------------------------------------
+
+---------------------------------------------------------
+applicationContext.xml
+---------------------------------------------------------
+     <bean name="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+          <property name="maxUploadSize" value="10240000" />
+          <property name="maxInMemorySize" value="1024000" />
+     </bean>
+
+
+
+
+---------------------------------------------------------
+SpringMVC Controller (upload file handler)
+---------------------------------------------------------
+    @RequestMapping(value = "/boardFileUpload.do", method = RequestMethod.POST)
+     @ResponseBody
+    public Map <String, String> boardFileUpload(Model model, HttpServletRequest request) throws Exception {
+        logger.info("BoardController > boardFileUpload");
+          logger.info("description: " + request.getParameter("description"));
+         
+          String realPath = request.getSession().getServletContext().getRealPath("/upload");
+          File upload_dir = new File(realPath);
+          if(! upload_dir.exists() ) {
+               logger.warn("Creating File Upload Directory:"+ realPath);
+               upload_dir.mkdirs();
+          }
+          String now = (new SimpleDateFormat("yyyyMMdd_HHmmss")).format(new Date());
+
+          MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+          List<MultipartFile> uploadFiles = multipartRequest.getFiles("fileUpload");
+          String savedFileNames = "";
+          int uploadFileCounts = 0;
+
+        if (uploadFiles != null && uploadFiles.size() > 0) {
+            for (MultipartFile aFile : uploadFiles){
+                    String fileNM =  aFile.getOriginalFilename();
+              
+                    String finalFileName = realPath + File.separator + now + "_" + fileNM;
+                    savedFileNames = savedFileNames + now + "_" + fileNM + "$$$";
+                
+                if (!aFile.getOriginalFilename().equals("")) {
+                    aFile.transferTo(new File(finalFileName));
+                         uploadFileCounts = uploadFileCounts + 1;
+                }
+            }
+        }
+
+        Map <String, String> map = new HashMap<String, String>();
+          if (uploadFileCounts > 0) {
+               map.put("upload", "Y");
+               map.put("fileUpload", savedFileNames);
+          } else {
+               map.put("upload", "N");
+               map.put("fileUpload", "Error");
+          }
+
+          return map;
+    }
+
+
+
+---------------------------------------------------------
+upload form
+---------------------------------------------------------
+<head>
+                    ...
+     <script src="${pageContext.request.contextPath}/js/jquery-1.11.0.min.js"></script>
+     <script src="${pageContext.request.contextPath}/js/jquery.form.js"></script>
+                    ...
+     <script type="text/javascript">
+    
+          var onFileSelect = function() {
+               $('#fileUploadStatus').html('<font color="#D941C5">Upload files before Save</font>');
+          };    
+         
+          var addUploadFile = function() {
+               $('#fileUploadTable').append("<tr><td><input type='file' name='fileUpload'/></td></tr>");
+          };         
+         
+          $('#fileUploadFrm').ajaxForm({
+               dataType : 'json',
+               beforeSerialize: function(){                      
+               },
+               beforeSubmit : function() {
+                    // loading messages
+               },         
+               uploadProgress: function(event, position, total, percentComplete) {
+                  $('#fileUploadStatus').text('Uploading : '+percentComplete + '%');
+              },              
+               success : function(data) {
+                    if(data.upload=='Y'){
+                         $('#aFile').val(data.fileUpload);                    
+                         // $('#fileUploadStatus').text(data.fileUpload);
+                         $('#fileUploadStatus').html('<font color="#22741C">Upload completed</font>');
+                    }
+                    if(data.upload=='N'){
+                         $('#fileUploadStatus').html('<font color="#CC3D3D">File upload failed, check the attach file</font>');
+                    }
+               },
+               complete: function(xhr) {
+               }
+          });
+     </script>
+</head>
+<body>
+
+               <form id="mainContentsSubmitFrm" method="post" action="">
+                    <input type="hidden" id="aFile" name="aFile" value="" />
+                    <input type="submit" value="Save Article" />
+               </form>
+              
+               <form id="fileUploadFrm" method="post" action="boardFileUpload.do" enctype="multipart/form-data">
+                 <table id="fileUploadTable"  class="table table-bordered">
+                      <tr>
+                           <td>
+                                <a href="javascript:addUploadFile();" class="btn btn-default btn-sm">Add File</a>
+                                   <input type="submit" value="Upload" class="btn btn-success btn-sm" />
+                                   &nbsp;&nbsp; <label id="fileUploadStatus"></label>
+                           </td>
+                      </tr>
+                     <tr>
+                         <td>
+                              <input type='file' name='fileUpload' onchange="onFileSelect();"/>
+                         </td>
+                     </tr>
+                 </table>
+             </form>
+              
+</body>              
+              

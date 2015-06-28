@@ -1,0 +1,57 @@
+--------------------------------------------------------------------------
+CKEditor 사용법 정리
+--------------------------------------------------------------------------
+1. CKEditor 파일 다운로드 
+   > http://ckeditor.com/
+
+2. webapps 디렉토리로 복사
+    > 적당히 링크를 변경하고 textarea를 사용하는 페이지에서 아래와 같이 정의
+    > ckeditor로 대체된 form을  ajax로 submit하는 경우, ckeditor에서 입력한 데이터가 form에 반영되도록 submit 전에 반드시 
+       updateElement()를 호출해주어야 함
+
+     <script src="${pageContext.request.contextPath}/ckeditor/ckeditor.js"></script>
+
+     <script type="text/javascript">
+          var insert = function() {
+               ckeditor.updateElement();
+               
+               $.ajax({
+                    ................
+               }); 
+               
+          };
+     </script>
+                    ..............................
+
+     <td colspan="6" class="active">
+          <textarea id="cont" name="cont" class="form-control" rows="7">${result.cont}</textarea>
+          <script type="text/javascript">
+               var ckeditor = CKEDITOR.replace('cont');
+          </script>
+     </td>
+     
+3. Ckeditor 메뉴바에 Color  변경 버튼 추가... > 별도의 플러그인을 설치해줘야 함 ㅎㅎ
+     a. Download Color button plugin from: http://ckeditor.com/addon/colorbutton
+     b. Download Panel Button plugin from: http://ckeditor.com/addon/panelbutton
+     c. Extract both files and upload the folders to /ckeditor4/plugins/
+     d. Add to your config.js the line:
+          config.extraPlugins = 'colorbutton';
+
+4. Font Size and Family 플러그인 설치
+     a. http://ckeditor.com/addon/font
+     b. Extract both files and upload the folders to /ckeditor4/plugins/
+     c. Add to your config.js the line:
+          config.extraPlugins = 'colorbutton,font';
+      --> 여러개의 config.extraPlugins를 사용할 경우는 쉼표(,)를 이용해서 한줄에 등록할 것!!!
+
+
+5. 필요한 경우 ckeditor 스킨 변경...
+     a. ckeditor 스킨 다운로드  && 압축해제 후 skins 폴더로 복사
+     b. ckeditor를 로딩하는 부분을 아래와 같이 변경...
+          <textarea id="cont" name="cont" class="form-control" rows="7">${result.cont}</textarea>
+          <script type="text/javascript">
+               var ckeditor = CKEDITOR.replace('cont',{skin:'스킨폴더명'});
+          </script>
+
+
+

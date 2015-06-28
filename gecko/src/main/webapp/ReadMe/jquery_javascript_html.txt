@@ -1,0 +1,399 @@
+HTML Tag Reference
+  > http://www.w3schools.com/tags/default.asp
+  
+Javascript Reference
+  > http://www.w3schools.com/jsref/default.asp
+  
+CSS Reference
+  > http://www.w3schools.com/cssref/default.asp
+  
+jQuery Reference
+  > http://www.w3schools.com/cssref/default.asp
+      
+      
+-----------------------------------------------------------------
+javascript 에서 Array 사용하기...
+-----------------------------------------------------------------  
+- http://blog.naver.com/injory/120212297572
+ 
+[배열]
+ 
+<배열정의방법>
+1. var myArray1= new Array();
+ myArray1[0]="apple";
+ myArray1[1]="banana";
+ myArray1[2]="orange";
+2. var myArray2 = new Array("apple", "banana", "orange");
+3. var myArray3 = ["apple","banana","orange"];
+ 
+ 
+[example]
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="Generator" content="EditPlus®">
+<meta name="Author" content="">
+<meta name="Keywords" content="">
+<meta name="Description" content="">
+<title>Document</title>
+
+<script>
+	function printArray(a) {
+		document.write("[");
+
+		for ( var i = 0; i < a.length; i++) {
+			document.write(a[i] + " ");
+		}
+
+		document.write("]<br>");
+	}
+
+	var myArray1 = new Array();
+	myArray1[0] = "apple";
+	myArray1[1] = "banana";
+	myArray1[2] = "orange";
+
+	var myArray2 = new Array("apple", "banana", "orange");
+	var myArray3 = [ "apple", "banana", "orange" ];
+
+	printArray(myArray1);
+	printArray(myArray2);
+	printArray(myArray3);
+</script>
+
+
+</head>
+<body>
+
+</body>
+</html>
+
+
+
+
+[example 2]
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="Generator" content="EditPlus®">
+<meta name="Author" content="">
+<meta name="Keywords" content="">
+<meta name="Description" content="">
+<title>Document</title>
+
+<script>
+	function printArray(a) {
+		document.write("[");
+
+		for ( var i = 0; i < a.length; i++) {
+			document.write(a[i] + " ");
+		}
+
+		document.write("]<br>");
+	}
+
+	var myArray1 = new Array();
+	myArray1[0] = "apple";
+	myArray1[1] = "banana";
+	myArray1[2] = "orange";
+
+	var myArray2 = new Array("apple", "banana", "orange");
+	var myArray3 = [ "apple", "banana", "orange" ];
+
+	printArray(myArray1);
+	printArray(myArray2);
+	printArray(myArray3);
+</script>
+
+
+</head>
+<body>
+
+</body>
+</html>
+
+-----------------------------------------------------------------
+Javascript 자주 사용하는 loop문 정리
+----------------------------------------------------------------- 
+[For문]
+            for (var i = 0; i < 10; i++) {
+                document.write(i);
+                document.write('<br />');
+            }
+
+[while문]
+            var i = 0;
+            while (i < 5) {
+                document.write(i);
+                document.write(',');
+                i++;
+            }
+
+    <중간에 break;로 빠져나갈수있음>
+            var i = 0;
+            while(true) {
+                if (i == 3) {
+                    break;
+                }
+                document.write("The number is " + i);
+                document.write("<br />");
+                i++;
+            }
+
+ continue; = 현재 로직을 종료하지만 반복은 유지한다
+ break; = 반복을 종료한다.
+ 
+-----------------------------------------------------------------
+Javascript 기초 문법 정리
+-----------------------------------------------------------------
+[자바스크립트 페이지관리]
+<페이지 로드관련>
+location.reload();
+location.href="memberDelete.jsp";
+javascript:history.back() //이전페이지로이동
+history.back()은 history.go(-1)과 같습니다. 
+앞으로 기능은 history.go(1)이지요. 
+두 번 앞으로는 history.go(2)이고, 
+두 번 뒤로는 history.go(-2)입니다.
+
+<페이지닫기>
+self.close();
+this.close();
+window.close();
+<페이지접근>
+opener.document.frm.postnumber.value=zipcode;
+ 
+[Name]
+[연산자]
+비교  == , =< , => , != ,
+===(데이터타입과 값이 모두일치판별), !==
+3항연산자 A%2==0?"짝수":"홀수"; A가짝수이면 짝수 홀수이면 홀수값반환
+ 
+
+[문자열함수]
+<substr> : 시작점으로부터 몇번째떨어진 문자까지 잘라냄
+ex) x=abcedfg x.substr(2,4) => "cdef"
+<substring> : 시작점과 끝점을 지정해서 잘라냄
+ex) x=abcdefg x.substring(2,4) => "cd"
+ex) x=abcdefg x.substring(2) => "cdefg"  // 두번째 인수를 지정하지 않으면 문자열끝까지반환
+ 
+ 
+ 
+ 
+
+[입력]
+confirm("게임을시작할까요") ; ==>확인은 1반환 취소는0반환
+prompt = 기본적으로 문자 받아오기때문에 pasrseint로 정수화
+<버튼>
+ex) <input type="button" value="비교" onclick="exec()"></input>
+ 
+ 
+
+[출력]
+알림창 = alert(경고!);
+ alert("ID는 6자리 이하여야합니다\n"+id.substring(0,6)); // 알림창줄바꿈
+<출력할위치지정>
+<span id="result" />
+sum=sum+1;
+document.getElementById("bottom").innerHTML=sum //sum이라는 변수를 bottom의 위치에 출력
+
+getElementById와 getElementsByName의 차이는
+단일값이냐? 아니면 배열값이냐? 라는 차이로 보면 쉬울듯.
+<input id="test" value="바보">의 값을 알고자 한다면 스크립트로..
+var Obj = document.getElementById("test");
+alert( Obj.value );// 바보가 출력되겠삼
+그럼 getElementsByName의 예는,
+<input name="test" value="바보">
+<input name="test" value="똥꽤">
+<input name="test" value="말똥">
+<script language="javascript">
+   var obj = document.getElementsByName("test");
+   alert( obj[0].value); // 바보가 출력되겠삼
+</script>
+
+
+
+-----------------------------------------------------------------
+Javascript DataType
+----------------------------------------------------------------- 
+문자열(string)
+ var var1 = 'codingeverybody';
+ var var2 = '1337';
+ alert(var1 + var2);    // 문자 'codingeverybody1337';
+
+수(number)
+ var val1 = 10;
+ var val2 = 20;
+ alert(val1 + val2); //30
+
+불린(boolean)
+            var result = 1 == 2;
+            alert(result);
+            if (result) {
+                alert('같다');
+            } else {
+                alert('다르다');
+            }
+배열(array)
+            var week = new Array('월', '화', '수', '목', '금', '토', '일');
+            alert(week); //월, 화, 수, 목, 금, 토, 일
+     alert(student[1]); ​//화
+            var student = ['철수', '영희', '진혁'];  // []대괄호 안되는듯...
+            alert(student[0]); ​
+ 
+
+undefined
+            var val1;
+            alert(val1); // undefined
+ 
+ 
+null
+     var val1 = null;
+            alert(val1);
+ 
+ 
+typeof
+            var value = 1;
+            alert( typeof value); // number
+ 
+            var value = 'one';
+            alert( typeof value); // string
+ 
+
+형변환
+           alert(1 + 1);// 2
+            alert(1 + '1');// 11, 숫자 1을 문자 1로 자동으로 형변환함
+            alert(true + 1);// 2 블리언 true를 숫자 1로 자동으로 형변환
+            if (undefined) {
+                alert(true);
+            } else {
+                alert(false)
+            }
+ 
+ *parseint
+ parseint(x); // x의값을 정수로 변환
+
+ Date.document.math.windows 와 달리 string은 new로 선언하지않고 바로 사용가능
+ ex) str1="hello";
+      
+      
+      
+      
+-----------------------------------------------------------------
+Html Tag 별 발생하는 Javascript 이벤트 정리
+-----------------------------------------------------------------  
+[onAbort] image
+The loading of the image is cancelled.
+ 
+[onBlur] Button, Checkbox, FileUpload, Layer, Password, Radio, Reset, Select, Submit, Text, TextArea, Window
+The object in question loses focus (e.g. by clicking outside it or pressing the TAB key).
+ 
+[onChange ] FileUpload, Select, Text, TextArea
+The data in the form element is changed by the user.
+ 
+[onClick ]Button, Document, Checkbox, Link, Radio, Reset, Submit
+The object is clicked on.
+ 
+[onDblClick ]Document, Link
+The object is double-clicked on.
+ 
+[onDragDrop ]Window
+An icon is dragged and dropped into the browser.
+ 
+[onError] Image, Window
+A JavaScript error occurs.  
+ 
+[onFocus] Button, Checkbox, FileUpload, Layer, Password, Radio, Reset, Select, Submit, Text, TextArea, Window 
+The object in question gains focus (e.g. by clicking on it or pressing the TAB key). 
+
+[onKeyDown] Document, Image, Link, TextArea
+The user presses a key. 
+
+[onKeyPress] Document, Image, Link, TextArea 
+The user presses or holds down a key.
+ 
+[onKeyUp] Document, Image, Link, TextArea 
+The user releases a key.
+ 
+[onLoad] Image, Window 
+The whole page has finished loading. 
+
+[onMouseDown] Button, Document, Link 
+The user presses a mouse button. 
+
+[onMouseMove] None 
+The user moves the mouse. 
+
+[onMouseOut] Image, Link 
+The user moves the mouse away from the object. 
+
+[onMouseOver] Image, Link 
+The user moves the mouse over the object.
+ 
+[onMouseUp] Button, Document, Link 
+The user releases a mouse button.
+ 
+[onMove] Window 
+The user moves the browser window or frame.
+ 
+[onReset] Form 
+The user clicks the form's Reset button.
+ 
+[onResize] Window 
+The user resizes the browser window or frame.
+ 
+[onSelect] Text, Textarea 
+The user selects text within the field.
+ 
+[onSubmit] Form 
+The user clicks the form's Submit button.
+ 
+[onUnload] Window 
+The user leaves the page.
+
+
+      
+-----------------------------------------------------------------
+Html 유형별 javascript function을 호출하는 방법
+-----------------------------------------------------------------  
+[button]
+- onclick 이벤트로 함수 호출
+ex)  onclick="setSearchName($('#inputField').val(),$('#inputsearchText').val())"
+
+<input type="button" value="검색" onclick="location.href='search.do?key='+frm.key.value+'&word='+frm.word.value">
+- onclick 이벤트로 페이지 이동
+<input type="button" value="글쓰기" onclick="location.href='insert.jsp'"> //주소부분 작은 따옴표로 묶을것
+
+[a태그]
+
+- a태그에서 액션 호출
+<a href='deleteAction?num=${gbb.num}'>[삭제]</a>
+
+- a태그에서 함수 호출
+ex) <a href="javascript:setSearchName()">클릭</a>
+
+[참고]
+a 태그에는 함수 호출시 리턴 값이 있으면 리턴 값을 보여주기 위해서 브라우저에 나타납니다. 그래서 보통 a 태그에 스크립트 함수를 호출할때는 리턴 값을 주지 않습니다.
+
+예1)
+<a href="#" onclick="함수();">
+함수에 리턴값이 있던 없던 상관 없음
+그러나 클릭하는 순간 링크 "#" 때문에 페이지의 최상위로 이동됨
+
+예2)
+<a href="javascript:함수();">
+브라우저에 리턴값이 출력되므로 리턴값이 있으면 안됨, 
+
+예3)
+<a href='javascript:void(0);' onclick="함수();"> 
+함수에 리턴값이 있던 없던 상관 없음
+클릭해도 페이지의 최상위로 이동하지 않음
+  
+
+
+
+
+  
+  
