@@ -2,6 +2,8 @@ package nz.pe.gecko.template.hr;
 
 import java.util.ArrayList;
 
+import nz.pe.gecko.template.mybatis.MemberDAO;
+
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -37,6 +39,18 @@ public class HrDAOImpl implements HrDAO {
 	public EmpVO getEmployeeDetail(EmpVO emp) {
 		HrDAO dao = sqlSession.getMapper(HrDAO.class);
 		return dao.getEmployeeDetail(emp);
+	}
+
+	@Override
+	public void updateEmployee(EmpVO emp) {
+		HrDAO dao = sqlSession.getMapper(HrDAO.class);
+		dao.updateEmployee(emp);
+	}
+
+	@Override
+	public int deleteEmployee(int empno) {
+		HrDAO dao = sqlSession.getMapper(HrDAO.class);
+		return dao.deleteEmployee(empno);
 	}
 	
 	

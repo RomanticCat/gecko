@@ -10,6 +10,8 @@ public interface HrDAO {
 	public int getEmployeeCount();
 	public void insertEmployee(EmpVO emp);
 	public EmpVO getEmployeeDetail(EmpVO emp);
+	public void updateEmployee(EmpVO emp);
+	public int deleteEmployee(int regno);
 	
 	
 	

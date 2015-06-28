@@ -132,7 +132,9 @@
 			
 			
 			$scope.edit = function(){
+				/*
 				var index = getSelectedIndex($scope.empno);
+				
 				
 				$scope.empList[index].empno = $scope.empno;
 				$scope.empList[index].ename = $scope.ename;
@@ -142,7 +144,29 @@
 				$scope.empList[index].sal = $scope.sal;
 				$scope.empList[index].comm = $scope.comm;
 				$scope.empList[index].deptno = $scope.deptno;	
+				*/
 				
+				var hireDateChar = $scope.hiredate
+				
+				
+				var dataObj = {
+						"empno" 	 : $scope.empno,
+						"ename" 	 : $scope.ename,
+						"job"   	 : $scope.job,
+						"mgr"   	 : $scope.mgr,
+						"hiredate"	 : getDateFromString(hireDateChar),
+						"sal" 	 	 : $scope.sal,
+						"comm" 		 : $scope.comm,
+						"deptno"	 : $scope.deptno
+				}
+
+				var res = $http.post('http://localhost:8080/gecko/updateEmployee.do', dataObj);
+				res.success(function (data, status, headers,config){
+					$scope.empList = data;
+				});
+				res.error(function (data, status, headers,config){
+					alert('failure msg:'+ JSON.stringify({data:data}));
+				});
 				
 				$scope.empno = '';
 				$scope.ename= '';
@@ -172,8 +196,17 @@
 			$scope.del = function(empno){
 				var result = confirm('Are you sure?');
 				if(result == true) {
+					$http.get("http://localhost:8080/gecko/deleteEmployee.do", {
+							params: {empno:empno}
+						}		
+					)
+					.success(function(data){
+						$scope.empList = data;
+					});
+					/*
 					var index = getSelectedIndex(empno);
 					$scope.empList.splice(index, 1);
+					*/
 				}
 			};
 			

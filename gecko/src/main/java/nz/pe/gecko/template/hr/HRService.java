@@ -45,6 +45,18 @@ public class HRService {
 	}
 	
 	@Transactional(propagation = Propagation.REQUIRED)
+	public void updateEmployee(EmpVO emp){
+		logger.info("HRService > updateEmployee ]]] ");
+		daoImpl.updateEmployee(emp);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public int deleteEmployee(int empno){
+		logger.info("HRService > deleteEmployee ]]] ");
+		return daoImpl.deleteEmployee(empno);
+	}	
+	
+	@Transactional(propagation = Propagation.REQUIRED)
 	public int getEmployeeCount(){
 		return daoImpl.getEmployeeCount();
 	}

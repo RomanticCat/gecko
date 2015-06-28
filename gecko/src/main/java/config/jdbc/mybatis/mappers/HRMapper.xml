@@ -32,7 +32,17 @@
 		values(#{empno},#{ename},#{job}, #{mgr}, #{hiredate}, #{sal}, #{comm}, #{deptno})
 	</insert>	
 	
-	
+	<update id="updateEmployee" parameterType="nz.pe.gecko.template.hr.EmpVO">
+		UPDATE emp SET
+			ename = #{ename},
+			job = #{job},
+			mgr = #{mgr},
+			hiredate = #{hiredate},
+			sal = #{sal},
+			comm = #{comm},
+			deptno = #{deptno}
+		WHERE empno = #{empno}
+	</update>	
 	
 	<select id="getEmployeeDetail" resultType="nz.pe.gecko.template.hr.EmpVO" parameterType="nz.pe.gecko.template.hr.EmpVO">
 		SELECT * FROM emp
@@ -43,5 +53,8 @@
 				WHERE ename='KING'
 			</if>
 	</select>
-	 
+	 	<delete id="deleteEmployee">
+		DELETE FROM emp
+		WHERE empno=#{empno}
+	</delete>
 </mapper>

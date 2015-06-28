@@ -62,10 +62,28 @@ public class HRController {
 	@RequestMapping(value = "/insertEmployee.do", method = RequestMethod.POST)
 	public String insertEmployee(@RequestBody EmpVO emp){
 		logger.info("HRController > insertEmployee ");
-		
-		
-		logger.info("HRController > insertEmployee ] empno:"+emp.getEmpno() +"   ename:"+emp.getEname() +"    hiredate:"+emp.getHiredate().toString());
+		logger.info("     HRController > insertEmployee ] empno:"+emp.getEmpno() +"   ename:"+emp.getEname() +"    hiredate:"+emp.getHiredate().toString());
 		HRSvc.insert(emp);
+		return HRSvc.getEmployeeListJSON();
+	}
+	
+
+	@ResponseBody
+	@RequestMapping(value = "/updateEmployee.do", method = RequestMethod.POST)
+	public String updateEmployee(@RequestBody EmpVO emp){
+		logger.info("HRController > insertEmployee ");
+		logger.info("     HRController > insertEmployee ] empno:"+emp.getEmpno() +"   ename:"+emp.getEname() +"    hiredate:"+emp.getHiredate().toString());
+		HRSvc.updateEmployee(emp);
+		return HRSvc.getEmployeeListJSON();
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping(value = "/deleteEmployee.do", method = RequestMethod.GET, produces={"application/json;charset=UTF-8"})
+	public String deleteEmployee(int empno){
+		logger.info("HRController > deleteEmployee ");
+		logger.info("HRController > deleteEmployee ] empno:"+empno);
+		HRSvc.deleteEmployee(empno);
 		
 		return HRSvc.getEmployeeListJSON();
 	}
