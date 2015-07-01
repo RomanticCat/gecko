@@ -3,6 +3,7 @@
 	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
 	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
 	xsi:schemaLocation="
         http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd
@@ -19,11 +20,16 @@
         http://www.springframework.org/schema/tx 
         http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
         http://www.springframework.org/schema/security
-        http://www.springframework.org/schema/security/spring-security.xsd">
+        http://www.springframework.org/schema/security/spring-security.xsd
+        http://www.springframework.org/schema/data/jpa
+        http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
 	<context:component-scan base-package="nz.pe.gecko.template.mvc" />
 	<context:component-scan base-package="nz.pe.gecko.template.test" />
 	<context:component-scan base-package="nz.pe.gecko.template.mybatis" />
 	<context:component-scan base-package="nz.pe.gecko.template.hr" />
+
+	<!-- <context:component-scan base-package="nz.pe.gecko.template.orm.hr" />
+	<jpa:repositories base-package="nz.pe.gecko.template.orm.hr" /> -->
 
 	<!-- <mvc:resources mapping="/app/**" location="/app/build/"/> -->
 
@@ -42,7 +48,7 @@
 
 
 
-	<!-- DBCP & MariaDB -->
+	<!-- DBCP & MariaDB (for MyBatis)-->
 	<bean id="myDatasourceSpied" class="org.apache.commons.dbcp2.BasicDataSource">
 		<property name="driverClassName" value="${jdbc.driverClassName}"></property>
 		<property name="url" value="${jdbc.url}"></property>
@@ -80,15 +86,25 @@
 
 
 
+
  
 
-	<!-- Transaction -->
+	<!-- Transaction (MyBatis)-->
 	<bean id="transactionManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="myDatasource" />
 	</bean>
+
+	<!-- Transaction (JPA) -->
+	<!-- <bean id="transactionManagerJPA"
+		class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean> -->
+	
+
 	
 	<tx:annotation-driven transaction-manager="transactionManager" />
+	<!-- <tx:annotation-driven transaction-manager="transactionManagerJPA" /> -->
 	<!-- Transaction -->
 
 	<!-- Datasource configuration : Basic Connection Type -->
@@ -98,6 +114,8 @@
 		value="root" /> <property name="password" value="mysql" /> </bean> -->
 
 
+	<!-- MyBatis Configuration  -->
+	<!-- MyBatis Configuration  -->
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="myDatasource" />
 		<!-- <property name="typeAliasesPackage" value="nz.co.s3m.member.vo" /> -->
@@ -107,13 +125,41 @@
 		<property name="configLocation"
 			value="classpath:config/jdbc/mybatis/mybatis-config.xml" />
 	</bean>
-
-
-
-
 	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
 		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory" />
 	</bean>
+	<!-- MyBatis Configuration  -->
+	<!-- MyBatis Configuration  -->
+
+
+	<!-- Spring JPA Configuration -->
+	<!-- Spring JPA Configuration -->
+	<!-- <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="packagesToScan">
+			<list>
+				<value>nz.pe.gecko.template.orm.hr</value>
+			</list>
+		</property>
+		<property name="dataSource" ref="myDatasource" />
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
+		</property>
+		<property name="jpaProperties">
+			<map>
+				<entry key="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect" />
+				<entry key="hibernate.hbm2ddl.auto" value="update" />
+				<entry key="hibernate.show_sql" value="true" />
+			</map>
+		</property>
+	</bean> -->
+	
+	<!-- <bean id="persistenceExceptionTranslationPostProcessor"
+      class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor" /> -->
+	<!-- Spring JPA Configuration -->
+	<!-- Spring JPA Configuration -->
+
+
+
 
 	<!-- JSON (deprecated) -->
 	<!-- <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"> 
