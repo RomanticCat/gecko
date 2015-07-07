@@ -16,7 +16,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="Dept_Jpa")
-public class Dept {
+public class DeptJpa {
 	
 	/* annotation for columns 
 	 * columnDefinition, insertable, length, name, nullable, precision, scale, table, unique, updatable
@@ -34,14 +34,14 @@ public class Dept {
 	private String loc;
 	
 	@OneToMany(mappedBy="dept", cascade=CascadeType.ALL, fetch=FetchType.EAGER)
-	private List<Emp> empList = new ArrayList<Emp>();
+	private List<EmpJpa> empList = new ArrayList<EmpJpa>();
 	
 
-	public List<Emp> getEmpList() {
+	public List<EmpJpa> getEmpList() {
 		return empList;
 	}
 
-	public void setEmpList(List<Emp> empList) {
+	public void setEmpList(List<EmpJpa> empList) {
 		this.empList = empList;
 	}
 

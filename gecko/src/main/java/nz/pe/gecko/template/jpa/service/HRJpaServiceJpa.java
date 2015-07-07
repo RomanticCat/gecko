@@ -5,8 +5,9 @@ import java.util.List;
 
 import javax.transaction.TransactionManager;
 
-import nz.pe.gecko.template.jpa.model.Dept;
-import nz.pe.gecko.template.jpa.model.Emp;
+import nz.pe.gecko.template.hr.EmpVO;
+import nz.pe.gecko.template.jpa.model.DeptJpa;
+import nz.pe.gecko.template.jpa.model.EmpJpa;
 import nz.pe.gecko.template.jpa.repository.HRDeptRepository;
 import nz.pe.gecko.template.jpa.repository.HREmpRepository;
 
@@ -20,7 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 @Service("HRServiceJpa")
-public class HRServiceJpa {
+public class HRJpaServiceJpa {
 	
 /*	@Autowired
 	@Qualifier("txManagerJPA")
@@ -33,7 +34,7 @@ public class HRServiceJpa {
 	private HRDeptRepository hrDeptRepo;
 	
 	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
-	public List<Emp> findAllEmp(){
+	public List<EmpJpa> findAllEmp(){
 		return hrEmpRepo.findAll();
 	}
 	
@@ -63,30 +64,30 @@ public class HRServiceJpa {
 	}
 	
 	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
-	public String getEmpListWithDept(String ename){
+	public String getEmpByEmpNoJSONJpa(Long empno){
 		Gson gson = new GsonBuilder()
 		.setDateFormat("dd/MM/yyyy")
 		.create();
-		return gson.toJson(hrEmpRepo.findEmpListWithDept(ename));
+		return gson.toJson(hrEmpRepo.getEmpByEmpNoJSONJpa(empno));
 	}
 	
 	
 	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
-	public void addEmp(Emp emp){
+	public void addEmp(EmpJpa emp){
 		//hrEmpRepo.saveAndFlush(emp);
 		hrEmpRepo.save(emp);
 		hrEmpRepo.flush();
 	}
 	
 	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
-	public void addDept(Dept dept){
+	public void addDept(DeptJpa dept){
 		//hrDeptRepo.saveAndFlush(dept);
 		hrDeptRepo.save(dept);
 		hrDeptRepo.flush();
 	}
 	
 	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
-	public String updateDept(Dept dept){
+	public String updateDept(DeptJpa dept){
 		hrDeptRepo.saveAndFlush(dept);
 		
 		Gson gson = new GsonBuilder()
@@ -97,9 +98,39 @@ public class HRServiceJpa {
 	}
 	
 	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
-	public Dept getDeptByDeptno(Long deptno){
-		Dept dept = hrDeptRepo.findOne(deptno);
+	public DeptJpa getDeptByDeptno(Long deptno){
+		DeptJpa dept = hrDeptRepo.findOne(deptno);
 		return dept;
+	}
+
+	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
+	public String getEmpListJSONJpa() {
+		
+		Gson gson = new GsonBuilder()
+		.setDateFormat("dd/MM/yyyy")
+		.create();
+		
+		
+		return gson.toJson(hrEmpRepo.findEmpListWithDept());
+	}
+
+	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
+	public String getDeptListJSONJpa() {
+		Gson gson = new GsonBuilder().setDateFormat("dd/MM/yyyy").create();
+
+		return gson.toJson(hrDeptRepo.findAll());
+	}
+
+	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
+	public void save(EmpJpa emp) {
+		hrEmpRepo.saveAndFlush(emp);
+		
+	}
+
+	@Transactional(value="transactionManagerJPA", propagation = Propagation.REQUIRED)
+	public void deleteEmp(Long empno) {
+		hrEmpRepo.delete(empno);
+		
 	}
 	
 	

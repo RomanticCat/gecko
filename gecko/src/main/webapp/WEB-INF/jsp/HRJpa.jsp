@@ -2,8 +2,9 @@
 <html ng-app="myapp">
 <head>
 	<meta charset="ISO-8859-1">
-	<title>SpringMVC / MyBatis / JSON / AngularJS</title>
+	<title>SpringMVC / JPA(Hibernate) / JSON / AngularJS</title>
 	<script type="text/javascript" src="js/angular.min.js"></script>
+	<!-- <script src="js/ui-bootstrap-tpls-0.13.0.min.js"></script> -->
 	<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
 </head>
 
@@ -26,7 +27,7 @@
 		<tr ng-repeat="emp in empList | orderBy:'ename'">
 			<td>{{$index+1}}</td>
 			<td>    
-				<a id="empDetail" ng-href="getEmpDetailJSON.do?empno={{emp.empno}}">{{emp.empno}}</a>
+				<a id="empDetail" ng-href="getEmpByEmpNoJSONJpa.do?empno={{emp.empno}}">{{emp.empno}}</a>
 			</td>
 			<td>{{emp.ename}}</td>
 			<td>{{emp.job}}</td>
@@ -34,7 +35,7 @@
 			<td>{{emp.hiredate}}</td>
 			<td>{{emp.sal | currency:"$":0}}</td>
 			<td>{{emp.comm | number:0}}</td>
-			<td>{{emp.deptno}}</td>
+			<td>{{emp.deptname}}<input type="hidden" name="deptno" ng-value="{{deptno}}" /></td>
 			<td>
 				<a href="#" ng-click="del(emp.empno)">Delete</a>
 				<a href="#" ng-click="selectEdit(emp.empno)">Edit</a>
@@ -43,7 +44,7 @@
 	</table>
 	
 	<br />
-	<h3>Employee Information</h3>
+	<h3>Employee Information4</h3>
 	<form name="empForm" class="form-horizontal">
 		<div class="form-group">
 			<div class="col-md-2">Employee No</div>
@@ -59,6 +60,10 @@
 		</div>	
 		<div class="form-group">
 			<div class="col-md-2">Manager</div>
+<!-- 			
+			
+			<div class="col-md-4"><input type="text" name="mgr" ng-model="mgr" class="form-control" typeahead="emp.empno as emp.ename for emp in empList| filter:$viewValue | limitTo:8"></div>
+ -->
 			<div class="col-md-4"><input type="text" name="mgr" ng-model="mgr" class="form-control"></div>
 		</div>	
 		<div class="form-group">
@@ -75,8 +80,13 @@
 		</div>	
 		<div class="form-group">
 			<div class="col-md-2">Dept</div>
-			<div class="col-md-4"><input type="text" name="deptno" ng-model="deptno" class="form-control"></div>
+			<div class="col-md-4">
+				<select ng-model="deptno" ng-options="dept.deptno as dept.dname for dept in deptList" ng-required="true">
+					<option value="">Dept</option>
+				</select>
+			</div>
 		</div>	
+		
 
 		<div class="form-group">
 			<div class="col-md-1"> </div>
@@ -89,6 +99,7 @@
 	
 	<script type="text/javascript">
 		var myapp = angular.module('myapp', []);
+		
 		myapp.controller('empController', function($scope, $http){
 			/* Sample Data Lists
 				$scope.empList = [
@@ -97,18 +108,21 @@
 						{empno:'7654', ename:'MARTIN', job:'SALESMAN', mgr:'7698', hiredate:'1981-09-28', sal:'1250', comm:'1400', deptno:'30'}
                 ];
 			*/
-			$http.get("getHRListJSON.do")
+			$http.get("getEmpListJSONJpa.do")
 				.success(function(data){
 					$scope.empList = data;
 				});
-			
-
+			$http.get("getDeptListJSONJpa.do")
+			.success(function(data){
+				$scope.deptList = data;
+				
+			});
 			$scope.add = function(){
 				var hireDateChar = $scope.hiredate
 				
 				
 				var dataObj = {
-						"empno" 	 : $scope.empno,
+					//	"empno" 	 : $scope.empno,
 						"ename" 	 : $scope.ename,
 						"job"   	 : $scope.job,
 						"mgr"   	 : $scope.mgr,
@@ -118,13 +132,17 @@
 						"deptno"	 : $scope.deptno
 				}
 
-				var res = $http.post('insertEmployee.do', dataObj);
+				var res = $http.post('saveEmployeeJpa.do', dataObj);
 				res.success(function (data, status, headers,config){
 					$scope.empList = data;
 				});
 				res.error(function (data, status, headers,config){
 					alert('failure msg:'+ JSON.stringify({data:data}));
 				});
+				
+				/* alert('empno:' + $scope.empno + ', ename:'+$scope.ename + ', job:'+$scope.job
+						+', manager:'+$scope.mgr+', hiredate:'+getDateFromString(hireDateChar)
+						+', sal:'+$scope.sal+', comm:'+$scope.comm+', deptno:'+$scope.deptno); */
 				
 				$scope.empno = '';
 				$scope.ename= '';
@@ -167,7 +185,8 @@
 						"deptno"	 : $scope.deptno
 				}
 
-				var res = $http.post('updateEmployee.do', dataObj);
+				var res = $http.post('saveEmployeeJpa.do', dataObj);
+				
 				res.success(function (data, status, headers,config){
 					$scope.empList = data;
 				});
@@ -198,12 +217,13 @@
 				$scope.comm = emp.comm;
 				$scope.deptno = emp.deptno;	
 				
+				//$scope.deptList = emp.deptno;	
 				
 			};
 			$scope.del = function(empno){
 				var result = confirm('Are you sure?');
 				if(result == true) {
-					$http.get("deleteEmployee.do", {
+					$http.get("deleteEmployeeJpa.do", {
 							params: {empno:empno}
 						}		
 					)

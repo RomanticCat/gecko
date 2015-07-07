@@ -2,8 +2,6 @@ package nz.pe.gecko.template.hr;
 
 import java.util.ArrayList;
 
-import nz.pe.gecko.template.mybatis.MemberDAO;
-
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;

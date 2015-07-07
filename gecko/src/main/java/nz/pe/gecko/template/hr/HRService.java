@@ -2,9 +2,6 @@ package nz.pe.gecko.template.hr;
 
 import java.util.ArrayList;
 
-import nz.pe.gecko.template.mybatis.MemberService;
-import nz.pe.gecko.template.mybatis.MemberVO;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -15,7 +15,7 @@ import javax.persistence.TemporalType;
 
 @Entity
 @Table(name="Emp_Jpa")
-public class Emp {
+public class EmpJpa {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -39,7 +39,7 @@ public class Emp {
 	private Long deptno;
 	
 	@ManyToOne
-	private Dept dept;
+	private DeptJpa dept;
 
 	public Long getEmpno() {
 		return empno;
@@ -105,11 +105,11 @@ public class Emp {
 		this.deptno = deptno;
 	}
 
-	public Dept getDept() {
+	public DeptJpa getDept() {
 		return dept;
 	}
 
-	public void setDept(Dept dept) {
+	public void setDept(DeptJpa dept) {
 		this.dept = dept;
 	}
 
